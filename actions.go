@@ -11,7 +11,7 @@ func (a *Access) CheckAPI() error {
 	response := struct {
 		Message string `json:"message"`
 	}{}
-	err := a.httpGet(PathTypeAPI, "api/", &response)
+	err := a.httpGet(PathTypeAPI, "", &response)
 	if err != nil {
 		return err
 	}
