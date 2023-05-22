@@ -14,7 +14,7 @@ type Device interface {
 	Domain() string
 }
 
-// GetDevice returns a Device object from an State object
+// GetDevice returns a Device object from a State object
 func (a *Access) GetDevice(state State) (Device, error) {
 	dom := strings.TrimSuffix(strings.SplitAfter(state.EntityID, ".")[0], ".")
 	switch dom {

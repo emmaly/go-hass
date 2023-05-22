@@ -6,13 +6,12 @@ import (
 	"time"
 )
 
-// CheckAPI checks whether or not the API is running. It returns an error
-// if it is not running.
+// CheckAPI checks if the API is running. It returns an error if it's not running.
 func (a *Access) CheckAPI() error {
 	response := struct {
 		Message string `json:"message"`
 	}{}
-	err := a.httpGet("/api/", &response)
+	err := a.httpGet(PathTypeAPI, "api/", &response)
 	if err != nil {
 		return err
 	}
@@ -51,7 +50,7 @@ func (s *State) GetDomain() string {
 
 // FireEvent fires an event.
 func (a *Access) FireEvent(eventType string, eventData interface{}) error {
-	return a.httpPost("/api/events/"+eventType, eventData)
+	return a.httpPost(PathTypeAPI, "events/"+eventType, eventData)
 }
 
 // CallService calls a service with a domain, service, and entity id.
@@ -59,13 +58,13 @@ func (a *Access) CallService(domain, service, entityID string) error {
 	serviceData := struct {
 		EntityID string `json:"entity_id"`
 	}{entityID}
-	return a.httpPost("/api/services/"+domain+"/"+service, serviceData)
+	return a.httpPost(PathTypeAPI, "services/"+domain+"/"+service, serviceData)
 }
 
 // ListStates gets an array of state objects
 func (a *Access) ListStates() (s States, err error) {
 	var list States
-	err = a.httpGet("/api/states", &list)
+	err = a.httpGet(PathTypeAPI, "states", &list)
 	if err != nil {
 		return States{}, err
 	}
@@ -75,7 +74,7 @@ func (a *Access) ListStates() (s States, err error) {
 // GetState retrieves one stateobject for the entity id
 func (a *Access) GetState(id string) (s State, err error) {
 	var state State
-	err = a.httpGet("/api/states/"+id, &state)
+	err = a.httpGet(PathTypeAPI, "states/"+id, &state)
 	if err != nil {
 		return State{}, err
 	}
@@ -106,6 +105,6 @@ func (a *Access) FilterStates(domains ...string) (s States, err error) {
 func (a *Access) ChangeState(id, state string) (s State, err error) {
 	s.EntityID = id
 	s.State = state
-	err = a.httpPost("/api/states/"+id, s)
+	err = a.httpPost(PathTypeAPI, "states/"+id, s)
 	return State{}, err
 }
