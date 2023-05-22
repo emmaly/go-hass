@@ -65,7 +65,7 @@ func (a *Access) httpGet(path string, v interface{}) error {
 	a.authorizeRequest(req)
 
 	success := false
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 3; i++ { // Retry three times
 		func() {
 			var resp *http.Response
 			resp, err = a.client.Do(req)
