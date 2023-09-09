@@ -9,14 +9,14 @@ import (
 // CheckAPI checks if the API is running. It returns an error if it's not running.
 func (a *Access) CheckAPI() error {
 	response := struct {
-		Result string `json:"result"`
+		Message string `json:"message"`
 	}{}
-	err := a.httpGet(PathTypeAPI, "info", &response)
+	err := a.httpGet(PathTypeAPI, "/", &response)
 	if err != nil {
 		return err
 	}
 
-	if response.Result == "" {
+	if response.Message == "" {
 		return errors.New("hass: API is not running")
 	}
 
