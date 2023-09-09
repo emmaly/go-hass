@@ -6,7 +6,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"path"
 	"time"
 )
 
@@ -69,7 +68,10 @@ func (a *Access) BuildURL(pType, pth string) (string, error) {
 
 	// Update path with any path passed in via URL combined with the base for the type
 	// and the passed in path
-	u.Path = path.Join(u.Path, base, pth)
+	u.Path, err = url.JoinPath(u.Path, base, pth)
+	if err != nil {
+		return "", err
+	}
 
 	return u.String(), nil
 }
