@@ -129,11 +129,12 @@ func (a *Access) ListAreas() (areas []string, err error) {
 }
 
 type AreaEntity struct {
-	EntityID string `json:"entity_id,omitempty"`
-	Friendly string `json:"friendly_name,omitempty"`
-	State    string `json:"state,omitempty"`
-	AreaID   string `json:"area_id,omitempty"`
-	DeviceID string `json:"device_id,omitempty"`
+	EntityID     string `json:"entity_id,omitempty"`
+	FriendlyName string `json:"friendly_name,omitempty"`
+	State        string `json:"state,omitempty"`
+	AreaID       string `json:"area_id,omitempty"`
+	DeviceID     string `json:"device_id,omitempty"`
+	DeviceClass  string `json:"device_class,omitempty"`
 }
 
 // ListAreaEntities returns a list of entities in an area
@@ -145,11 +146,12 @@ func (a *Access) ListAreaEntities(area string) (entities []AreaEntity, err error
 			"entities": [
 		{%%- for state in expand(area_entities("%s")) %%}
 				{
-					"entity_id": {{ state.entity_id | tojson }},
-					"friendly_name": {{ state.attributes.friendly_name | tojson }},
-					"state": {{ state.state | tojson }},
-					"area_id": {{ area_id(state.entity_id) | tojson }},
-					"device_id": {{ device_id(state.entity_id) | tojson }}
+					"entity_id": {{ state.entity_id | default("") | tojson }},
+					"friendly_name": {{ state.attributes.friendly_name | default("") | tojson }},
+					"state": {{ state.state | default("") | tojson }},
+					"area_id": {{ area_id(state.entity_id) | default("") | tojson }},
+					"device_id": {{ device_id(state.entity_id) | default("") | tojson }},
+					"device_class": {{ state.attributes.device_class | default("") | tojson }}
 				},
 		{%%- endfor %%}
 			]
