@@ -1,7 +1,10 @@
 package hass
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -107,4 +110,65 @@ func (a *Access) ChangeState(id, state string) (s State, err error) {
 	s.State = state
 	err = a.httpPost(PathTypeAPI, "states/"+id, s, nil)
 	return State{}, err
+}
+
+// ListAreas returns a list of areas
+func (a *Access) ListAreas() (areas []string, err error) {
+	var output string
+	output, err = a.RenderTemplate(`{{ areas() | to_json }}`)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal([]byte(output), &areas)
+	if err != nil {
+		return
+	}
+
+	return areas, nil
+}
+
+type AreaEntity struct {
+	EntityID string `json:"entity_id,omitempty"`
+	Friendly string `json:"friendly_name,omitempty"`
+	State    string `json:"state,omitempty"`
+	AreaID   string `json:"area_id,omitempty"`
+	DeviceID string `json:"device_id,omitempty"`
+}
+
+// ListAreaEntities returns a list of entities in an area
+func (a *Access) ListAreaEntities(area string) (entities []AreaEntity, err error) {
+	escapedArea := strings.Replace(area, `"`, `\"`, -1)
+	var output string
+	output, err = a.RenderTemplate(fmt.Sprintf(`
+		{
+			"entities": [
+		{%%- for state in expand(area_entities("%s")) %%}
+				{
+					"entity_id": {{ state.entity_id | tojson }},
+					"friendly_name": {{ state.attributes.friendly_name | tojson }},
+					"state": {{ state.state | tojson }},
+					"area_id": {{ area_id(state.entity_id) | tojson }},
+					"device_id": {{ device_id(state.entity_id) | tojson }}
+				},
+		{%%- endfor %%}
+			]
+		}
+	`, escapedArea))
+	if err != nil {
+		return
+	}
+
+	output = regexp.MustCompile(`(\}),(\s*\]\s*\}\s*)$`).ReplaceAllString(output, `$1$2`)
+
+	var response struct {
+		Entities []AreaEntity `json:"entities"`
+	}
+	err = json.Unmarshal([]byte(output), &response)
+	if err != nil {
+		return
+	}
+	entities = response.Entities
+
+	return entities, nil
 }
