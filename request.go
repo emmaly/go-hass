@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -139,7 +141,7 @@ func (a *Access) httpGet(pType, path string, v interface{}) error {
 	return err
 }
 
-func (a *Access) httpPost(pType, path string, v interface{}) error {
+func (a *Access) httpPost(pType, path string, v interface{}, out interface{}) error {
 	var req *http.Request
 
 	url, err := a.BuildURL(pType, path)
@@ -169,7 +171,7 @@ func (a *Access) httpPost(pType, path string, v interface{}) error {
 
 	a.authorizeRequest(req)
 
-	success := false
+	done := false
 	for i := 0; i < 3; i++ {
 		func() {
 			var resp *http.Response
@@ -180,10 +182,66 @@ func (a *Access) httpPost(pType, path string, v interface{}) error {
 
 			defer resp.Body.Close()
 
-			success = true
+			if resp.StatusCode != http.StatusOK {
+				err = errors.New("hass: status not OK: " + resp.Status)
+				return
+			}
+
+			if out == nil || resp.Body == nil {
+				done = true
+				return
+			}
+
+			contentType := strings.Split(resp.Header.Get("Content-Type"), ";")[0]
+
+			switch contentType {
+			case "application/json":
+				dec := json.NewDecoder(resp.Body)
+				err = dec.Decode(out)
+				if err != nil {
+					return
+				}
+
+			case "application/octet-stream":
+				bodyBytes, ok := out.(*[]byte)
+				if !ok {
+					err = errors.New("hass: out is not *[]byte")
+					return
+				}
+
+				var buffer bytes.Buffer
+				_, err := io.Copy(&buffer, resp.Body)
+				if err != nil {
+					return
+				}
+
+				*bodyBytes = buffer.Bytes()
+				done = true
+
+			case "text/plain":
+				bodyBytes, ok := out.(*string)
+				if !ok {
+					err = errors.New("hass: out is not *string")
+					return
+				}
+
+				var buffer bytes.Buffer
+				_, err := io.Copy(&buffer, resp.Body)
+				if err != nil {
+					return
+				}
+
+				*bodyBytes = buffer.String()
+				done = true
+
+			default:
+				err = errors.New("hass: unknown content type: " + contentType)
+				return
+			}
+
 		}()
 
-		if success {
+		if done {
 			break
 		}
 	}

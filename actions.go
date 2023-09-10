@@ -50,7 +50,7 @@ func (s *State) GetDomain() string {
 
 // FireEvent fires an event.
 func (a *Access) FireEvent(eventType string, eventData interface{}) error {
-	return a.httpPost(PathTypeAPI, "events/"+eventType, eventData)
+	return a.httpPost(PathTypeAPI, "events/"+eventType, eventData, nil)
 }
 
 // CallService calls a service with a domain, service, and entity id.
@@ -58,7 +58,7 @@ func (a *Access) CallService(domain, service, entityID string) error {
 	serviceData := struct {
 		EntityID string `json:"entity_id"`
 	}{entityID}
-	return a.httpPost(PathTypeAPI, "services/"+domain+"/"+service, serviceData)
+	return a.httpPost(PathTypeAPI, "services/"+domain+"/"+service, serviceData, nil)
 }
 
 // ListStates gets an array of state objects
@@ -105,6 +105,6 @@ func (a *Access) FilterStates(domains ...string) (s States, err error) {
 func (a *Access) ChangeState(id, state string) (s State, err error) {
 	s.EntityID = id
 	s.State = state
-	err = a.httpPost(PathTypeAPI, "states/"+id, s)
+	err = a.httpPost(PathTypeAPI, "states/"+id, s, nil)
 	return State{}, err
 }
