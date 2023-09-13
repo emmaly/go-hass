@@ -1,3 +1,3 @@
-module github.com/pawal/go-hass
+module github.com/emmaly/go-hass
 
 go 1.19
